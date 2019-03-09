@@ -208,6 +208,7 @@
                                   implementation="org.rust.lang.core.resolve.ref.RsMetaItemReferenceContributor"/>
         <psi.referenceContributor language="Rust"
                                   implementation="org.rust.lang.core.resolve.ref.RsLitExprReferenceContributor"/>
+        <referencesSearch implementation="org.rust.lang.core.resolve.ref.RsReferencesSearchExtensionImpl"/>
 
         <!-- Completion -->
 
@@ -540,6 +541,14 @@
 
         <!-- Intentions -->
 
+        <intentionAction>
+            <className>org.rust.ide.intentions.ConvertToStructIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.ConvertToTupleIntention</className>
+            <category>Rust</category>
+        </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ExtractInlineModuleIntention</className>
             <category>Rust</category>
