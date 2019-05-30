@@ -898,9 +898,6 @@ class RsTypeInferenceWalker(
                 enforceOverloadedBinopTypes(lhsType, rhsTypeVar, op)
                 val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar) ?: TyUnknown)
 
-                val lhsAdjustment = Adjustment.BorrowReference(TyReference(lhsType, Mutability.MUTABLE))
-                ctx.addAdjustment(expr.left, lhsAdjustment)
-
                 rhsType to TyUnit
             }
             AssignmentOp.EQ -> {

@@ -14,6 +14,14 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
         }
     """)
 
+    fun `test E0384 reassign immutable with arithmetic assignment`() = checkByText("""
+        fn main() {
+            let x = 5;
+            <error descr="Cannot assign twice to immutable variable [E0384]">x += 3</error>;
+        }
+    """)
+
+
     fun `test E0384 reassign mutable binding`() = checkByText("""
         fn main() {
             let mut x = 5;
