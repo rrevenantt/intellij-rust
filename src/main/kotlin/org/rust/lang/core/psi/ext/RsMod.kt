@@ -77,3 +77,8 @@ val RsMod.superMods: List<RsMod> get() {
         .takeWhile { visited.add(it) }
         .toList()
 }
+
+fun RsMod.getOrCreateOwnedDir(): PsiDirectory? {
+    if (ownedDirectory != null) return ownedDirectory
+    return modName?.let { `super`?.getOrCreateOwnedDir()?.createSubdirectory(it) }
+}

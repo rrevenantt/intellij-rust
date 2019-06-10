@@ -56,6 +56,29 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     //- bar/foo.rs
     """)
 
+    fun `test create file recursive quick fix`() = checkFixByFileTree("Create module file", """
+    //- main.rs
+        mod bar;
+    //- bar.rs
+        mod baz{
+            mod <error descr="File not found for module `foo` [E0583]">/*caret*/foo</error>;
+        }
+        fn main() {
+            println!("Hello, World!");
+        }
+    """, """
+    //- main.rs
+        mod bar;
+    //- bar.rs
+        mod baz{
+            mod foo;
+        }
+        fn main() {
+            println!("Hello, World!");
+        }
+    //- bar/baz/foo.rs
+    """)
+
     fun `test no E0583 if no semicolon after module declaration`() = checkByText("""
         mod foo<error descr="';' or '{' expected"> </error>
         // often happens during typing `mod foo {}`
