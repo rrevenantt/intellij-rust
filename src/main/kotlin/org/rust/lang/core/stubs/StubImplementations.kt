@@ -5,17 +5,24 @@
 
 package org.rust.lang.core.stubs
 
-import com.intellij.lang.ASTNode
+import com.intellij.lang.*
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBuilder
 import com.intellij.psi.stubs.*
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.IReparseableElementType
 import com.intellij.psi.tree.IStubFileElementType
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.BitUtil
 import com.intellij.util.io.DataInputOutputUtil.readNullable
 import com.intellij.util.io.DataInputOutputUtil.writeNullable
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.RsASTFactory
+import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.LBRACE
+import org.rust.lang.core.psi.RsElementTypes.RBRACE
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
 import org.rust.lang.core.types.ty.TyFloat
@@ -36,7 +43,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 172
+        override fun getStubVersion(): Int = 173
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -72,7 +79,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 }
 
 
-fun factory(name: String): RsStubElementType<*, *> = when (name) {
+fun factory(name: String): IElementType = when (name) {
     "EXTERN_CRATE_ITEM" -> RsExternCrateItemStub.Type
     "USE_ITEM" -> RsUseItemStub.Type
 
@@ -150,6 +157,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "META_ITEM_ARGS" -> RsPlaceholderStub.Type("META_ITEM_ARGS", ::RsMetaItemArgsImpl)
 
     "BLOCK" -> RsBlockStubType
+    "SIMPLE_BLOCK" -> RsBlockStubType
 
     "BINARY_OP" -> RsBinaryOpStub.Type
 
@@ -1140,10 +1148,41 @@ class RsBinaryOpStub(
     }
 }
 
-object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl) {
-    override fun shouldCreateStub(node: ASTNode): Boolean =
-        createStubIfParentIsStub(node) || PsiTreeUtil.getChildOfType(node.psi, RsItemElement::class.java) != null
+object RsBlockStubType : IReparseableElementType("BLOCK", RsLanguage) {
+    override fun isParsable(buffer: CharSequence, fileLanguage: Language, project: Project): Boolean {
+        val pd = LanguageParserDefinitions.INSTANCE.forLanguage(RsLanguage)
+        val hasProperBraceBalance = PsiBuilderUtil.hasProperBraceBalance(buffer, pd.createLexer(project), LBRACE, RBRACE)
+        return hasProperBraceBalance
+    }
+
+    override fun createNode(text: CharSequence?): ASTNode? {
+        return RsASTFactory().createLazy(this, text)
+    }
+
+    override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode {
+        val project = chameleon.psi.project
+        val builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon)
+
+        //workaround for SimpleBlock rule inaccessible to start parsing from because of fake Block rule
+        val parser = RustParser()
+//        val adapted = GeneratedParserUtilBase.adapt_builder_(REPARSE_BLOCK,builder,parser,RustParser.EXTENDS_SETS_)
+//        val marker = GeneratedParserUtilBase
+//            .enter_section_(adapted, 0, GeneratedParserUtilBase._COLLAPSE_, null)
+//        val parsed = RustParser.SimpleBlock(adapted,0)
+//        GeneratedParserUtilBase.exit_section_(adapted, 0, marker, REPARSE_BLOCK, parsed, true) { _, _ -> false }
+//        // parse and prepare light tree
+//        builder.getLightTree()
+//        //remove root node from light tree
+//        marker.drop()
+        parser.parse(this, builder)
+
+        return builder.treeBuilt.firstChildNode
+    }
 }
+//    RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl) {
+//    override fun shouldCreateStub(node: ASTNode): Boolean =
+//        createStubIfParentIsStub(node) || PsiTreeUtil.getChildOfType(node.psi, RsItemElement::class.java) != null
+//}
 
 class RsExprStubType<PsiT : RsElement>(
     debugName: String,

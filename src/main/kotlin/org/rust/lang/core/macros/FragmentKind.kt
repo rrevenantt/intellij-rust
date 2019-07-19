@@ -49,7 +49,7 @@ enum class FragmentKind {
                 Ty -> RustParser.TypeReference(adaptBuilder, 0)
                 Pat -> RustParser.Pat(adaptBuilder, 0)
                 Stmt -> parseStatement(adaptBuilder)
-                Block -> RustParser.SimpleBlock(adaptBuilder, 0)
+                Block -> RustParser.Block(adaptBuilder, 0)
                 Item -> parseItem(adaptBuilder)
                 Meta -> RustParser.MetaItemWithoutTT(adaptBuilder, 0)
                 Vis -> parseVis(adaptBuilder)

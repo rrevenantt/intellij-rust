@@ -435,7 +435,7 @@ Function ::= OuterAttr*
              FnParameters
              RetType?
              WhereClause?
-             (';' | InnerAttrsAndBlock)
+             (';' | Block)
 {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
@@ -951,7 +951,7 @@ AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> { elementType = Exp
 StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> { elementType = Expr }
 StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> { elementType = Expr }
 
-BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] LabelDecl? SimpleBlock {
+BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] LabelDecl? Block {
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1061,7 +1061,7 @@ PathExpr ::= OuterAttr* PathGenericArgsWithColons {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
+WhileExpr ::= OuterAttr* LabelDecl? while Condition Block {
   pin = 'while'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -1069,7 +1069,7 @@ WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
 }
 Condition ::= [ let OrPats '=' ] NoStructLitExpr
 
-LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
+LoopExpr ::= OuterAttr* LabelDecl? loop Block {
   pin = 'loop'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -1088,7 +1088,7 @@ BreakExpr ::= OuterAttr* break Label? AnyExpr? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ForExpr ::= OuterAttr* LabelDecl? for Pat in NoStructLitExpr SimpleBlock {
+ForExpr ::= OuterAttr* LabelDecl? for Pat in NoStructLitExpr Block {
   pin = 'for'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -1118,12 +1118,12 @@ MatchArm ::= OuterAttr* OrPats MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <
 private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}' | '|')
 MatchArmGuard ::= if AnyExpr
 
-IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? {
+IfExpr ::= OuterAttr* if Condition Block ElseBranch? {
   pin = 'if'
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-ElseBranch ::= else ( IfExpr | SimpleBlock )
+ElseBranch ::= else ( IfExpr | Block )
 
 RetExpr ::= OuterAttr* return Expr? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -1378,23 +1378,26 @@ PatMacro ::= MacroCallNoSemicolons
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fake Block ::= '{' InnerAttr* (Item | Stmt)* Expr? '}' {
+fake SimpleBlock ::= '{' InnerAttr* (Item | Stmt)* Expr? '}' {
   pin = 1
   implements = "org.rust.lang.core.psi.ext.RsItemsOwner"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+//  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+//  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+//  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+//  elementType = "org.rust.lang.core.stubs.RsBlockStubType"
+}
+
+Block ::= '{' InnerAttr* BlockElement* '}' {
+  pin = 1
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+//  elementType = Block
+  extends = SimpleBlock
 }
 
-SimpleBlock ::= '{' BlockElement* '}' {
-  pin = 1
-  elementType = Block
-}
-
-InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
-  pin = 1
-  elementType = Block
-}
+//InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
+//  pin = 1
+//  elementType = Block
+//}
 
 private BlockElement ::= !'}' (Macro | NonSpecialMacroCall | ExprStmtOrLastExpr | Stmt | Item) {
   pin = 1
@@ -1451,3 +1454,5 @@ ExprCodeFragment ::= Expr?
 StmtCodeFragment ::= Stmt?
 //noinspection BnfUnusedRule
 TypeRefCodeFragment ::= TypeReference?
+//noinspection BnfUnusedRule
+ReparseBlock ::= Block
