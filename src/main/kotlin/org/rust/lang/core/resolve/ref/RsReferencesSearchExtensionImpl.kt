@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTupleFieldDecl
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.containingCargoPackage
 
 class RsReferencesSearchExtensionImpl : QueryExecutorBase<RsReference, ReferencesSearch.SearchParameters>(true) {
     override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in RsReference>) {
@@ -29,12 +30,18 @@ class RsReferencesSearchExtensionImpl : QueryExecutorBase<RsReference, Reference
                     element
                 )
             }
-            element is RsFile && element.getOwnedDirectory() != null ->
+            element is RsFile -> {
+                val usableName = if (element.isCrateRoot) {
+                    element.containingCargoPackage?.normName
+                } else {
+                    element.getOwnedDirectory()?.name
+                } ?: return
                 queryParameters.optimizer.searchWord(
-                    element.getOwnedDirectory()!!.name,
+                    usableName,
                     queryParameters.effectiveSearchScope,
                     true,
                     element)
+            }
         }
     }
 
