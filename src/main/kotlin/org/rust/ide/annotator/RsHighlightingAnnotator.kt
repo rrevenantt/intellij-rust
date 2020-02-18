@@ -58,6 +58,11 @@ class RsHighlightingAnnotator : AnnotatorBase() {
 
         return when (element.elementType) {
             IDENTIFIER, QUOTE_IDENTIFIER, SELF -> highlightIdentifier(element, parent, holder)
+            in RS_BINARY_OPS -> if (parent is RsReferenceElement) {
+                highlightReference(parent, holder)
+            } else {
+                null
+            }
             // Although we remap tokens from identifier to keyword, this happens in the
             // parser's pass, so we can't use HighlightingLexer to color these
             in RS_CONTEXTUAL_KEYWORDS -> RsColor.KEYWORD

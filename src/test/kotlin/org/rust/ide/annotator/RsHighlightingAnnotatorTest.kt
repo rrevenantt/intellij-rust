@@ -6,10 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.ide.todo.TodoConfiguration
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.colors.RsColor
 
@@ -189,6 +186,15 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         fn main() {
             <CONST>FOO</CONST>;
             <CONST>BAR</CONST>;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test binary operator`() = checkHighlighting("""
+        #[derive(Eq,PartialEq)]
+        struct S(i32);
+        fn test(){
+            let a = S(1) <METHOD>==</METHOD> S(2);
         }
     """)
 
