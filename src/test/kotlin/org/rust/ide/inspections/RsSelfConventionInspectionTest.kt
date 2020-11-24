@@ -27,17 +27,21 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
             fn into_u32(self) -> u32 { 0 }
             fn into_u32_mut(mut self) -> u32 { 0 }
             fn into_u16(<warning descr="methods called `into_*` usually take self by value; consider choosing a less ambiguous name">&self</warning>) -> u16 { 0 }
+            fn into_u16_explicit(<warning descr="methods called `into_*` usually take self by value; consider choosing a less ambiguous name">self:&Self</warning>) -> u16 { 0 }
             fn <warning descr="methods called `into_*` usually take self by value; consider choosing a less ambiguous name">into_without_self</warning>() -> u16 { 0 }
         }
     """)
 
     fun testTo() = checkByText("""
         struct Foo;
+        struct Rc<T:?Sized>(T);
         impl Foo {
             fn to_something(<warning descr="methods called `to_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) -> u32 { 0 }
             fn to_something_else(&self) -> u32 { 92 }
-        }
-    """)
+            fn to_something_explicit_self(self:&Self) -> u32 { 92 }
+            fn to_something_mut_self(<warning descr="methods called `to_*` usually take self by reference; consider choosing a less ambiguous name">self:&mut Self</warning>) -> u32 { 92 }
+            fn to_something_rc_self(self:&Rc<Self>) -> u32 { 92 }
+}    """)
 
     fun testIs() = checkByText("""
         struct Foo;

@@ -7,10 +7,12 @@ package org.rust.ide.inspections
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.selfType
+import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.stdext.typeAscription
 
@@ -63,7 +65,12 @@ private val RsFunction.selfSignature: SelfSignature
             self == null -> SelfSignature.NO_SELF
             self.isRef && self.mutability.isMut -> SelfSignature.BY_MUT_REF
             self.isRef -> SelfSignature.BY_REF
-            else -> SelfSignature.BY_VAL
+            else ->
+                when ((self.typeReference as? RsRefLikeType)?.mutability) {
+                    Mutability.IMMUTABLE -> SelfSignature.BY_REF
+                    Mutability.MUTABLE -> SelfSignature.BY_MUT_REF
+                    null -> SelfSignature.BY_VAL
+                }
         }
     }
 
